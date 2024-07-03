@@ -68,5 +68,14 @@ public class ArticleController {
         articleRepository.delete(article);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/title/{title}")
+    public ResponseEntity<List<Article>> getArticlesByTitle(@PathVariable String title) {
+        List<Article> articles = articleRepository.findByTitle(title);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
 }
 
