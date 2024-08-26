@@ -1,11 +1,9 @@
 package sql_project.sql.controller;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sql_project.sql.dto.ArticleDto;
+import sql_project.sql.dto.ArticleDTO;
 import sql_project.sql.dto.CategoryDTO;
 import sql_project.sql.model.Article;
 import sql_project.sql.model.Category;
@@ -84,7 +82,7 @@ public class CategoryController {
         if (category.getArticles() != null) {
 
         categoryDTO.setArticles(category.getArticles().stream().map(article -> {
-            ArticleDto articleDTO = new ArticleDto();
+            ArticleDTO articleDTO = new ArticleDTO();
             articleDTO.setId(article.getId());
             articleDTO.setTitle(article.getTitle());
             articleDTO.setContent(article.getContent());

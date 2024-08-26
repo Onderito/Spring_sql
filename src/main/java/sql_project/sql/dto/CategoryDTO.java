@@ -1,35 +1,17 @@
 package sql_project.sql.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 
+    @Setter
+    @Getter
     public class CategoryDTO {
         private Long id;
         private String name;
-        private List<ArticleDto> articles;
+        private List<ArticleDTO> articles;
 
-        public Long getId() {
-            return id;
-        }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public List<ArticleDto> getArticles() {
-            return articles;
-        }
-
-        public void setArticles(List<ArticleDto> articles) {
-            this.articles = articles;
-        }
     }
 

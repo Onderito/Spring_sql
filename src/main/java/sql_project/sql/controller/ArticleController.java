@@ -1,16 +1,20 @@
 package sql_project.sql.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sql_project.sql.model.Article;
 import sql_project.sql.model.Category;
+import sql_project.sql.model.Image;
 import sql_project.sql.repository.ArticleRepository;
 import sql_project.sql.repository.CategoryRepository;
-import sql_project.sql.dto.ArticleDto;
+import sql_project.sql.dto.ArticleDTO;
+import sql_project.sql.repository.ImageRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,20 +29,29 @@ public class ArticleController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private final ImageRepository imageRepository;
+
+    public ArticleController(ArticleRepository articleRepository, CategoryRepository categoryRepository, ImageRepository imageRepository) {
+        this.articleRepository = articleRepository;
+        this.categoryRepository = categoryRepository;
+        this.imageRepository = imageRepository;
+    }
+
     // Méthodes CRUD à venir
 
     @GetMapping
-    public ResponseEntity<List<ArticleDto>> getAllArticles() {
+    public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
         if (((List<?>) articles).isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        List<ArticleDto> articleDtos = articles.stream().map(this::convertToDTO).collect(Collectors.toList());
-        return ResponseEntity.ok(articleDtos);
+        List<ArticleDTO> articleDTOS = articles.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(articleDTOS);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ArticleDto> getArticleById(@PathVariable Long id) {
+    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id) {
         Optional<Article> optionalArticle = articleRepository.findById(id);
         if (!optionalArticle.isPresent()) {
             return ResponseEntity.notFound().build();
@@ -48,7 +61,7 @@ public class ArticleController {
     }
 
     @PostMapping
-    public ResponseEntity<ArticleDto> createArticle(@RequestBody ArticleDto articleDto) {
+    public ResponseEntity<ArticleDTO> createArticle(@RequestBody ArticleDTO articleDto) {
         Article article = convertToEntity(articleDto);
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
@@ -62,12 +75,32 @@ public class ArticleController {
             article.setCategory(category);
         }
 
+        if (article.getImages() != null && !article.getImages().isEmpty()) {
+            List<Image> validImages = new ArrayList<>();
+            for (Image image : article.getImages()) {
+                if (image.getId() != null) {
+                    // Vérification des images existantes
+                    Image existingImage = imageRepository.findById(image.getId()).orElse(null);
+                    if (existingImage != null) {
+                        validImages.add(existingImage);
+                    } else {
+                        return ResponseEntity.badRequest().body(null);
+                    }
+                } else {
+                    // Création de nouvelles images
+                    Image savedImage = imageRepository.save(image);
+                    validImages.add(savedImage);
+                }
+            }
+            article.setImages(validImages);
+        }
+
         Article savedArticle = articleRepository.save(article);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedArticle));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ArticleDto> updateArticle(@PathVariable Long id, @RequestBody ArticleDto articleDTO) {
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody ArticleDTO articleDTO) {
         Optional<Article> optionalArticle = articleRepository.findById(id);
         if (!optionalArticle.isPresent()) {
             return ResponseEntity.notFound().build();
@@ -110,9 +143,9 @@ public class ArticleController {
         return ResponseEntity.ok(articles);
     }
 
-private ArticleDto convertToDTO(Article article) {
-    ArticleDto articleDto = new ArticleDto();
-    articleDto.setId(article.getId()); // Utiliser articleDto au lieu de ArticleDto
+private ArticleDTO convertToDTO(Article article) {
+    ArticleDTO articleDto = new ArticleDTO();
+    articleDto.setId(article.getId());
     articleDto.setTitle(article.getTitle());
     articleDto.setContent(article.getContent());
     articleDto.setCreatedAt(article.getCreatedAt());
@@ -120,9 +153,12 @@ private ArticleDto convertToDTO(Article article) {
     if (article.getCategory() != null) {
         articleDto.setCategoryId(article.getCategory().getId());
     }
+    if (article.getImages() != null) {
+        articleDto.setImageUrls(article.getImages().stream().map(Image::getUrl).collect(Collectors.toList()));
+    }
     return articleDto;
 }
-    private Article convertToEntity(ArticleDto articleDTO) {
+    private Article convertToEntity(ArticleDTO articleDTO) {
         Article article = new Article();
         article.setId(articleDTO.getId());
         article.setTitle(articleDTO.getTitle());

@@ -9,13 +9,15 @@ import java.util.List;
 @Setter
 @Getter
 @Entity
-public class Tag {
+public class Image {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
 
-    @ManyToMany(mappedBy = "tags")
+    @Column(nullable = false)
+    private String url;
+
+    @ManyToMany(mappedBy = "images")
     private List<Article> articles;
-
 }
