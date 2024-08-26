@@ -1,34 +1,16 @@
 package sql_project.sql.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Setter
+@Getter
 public class ImageDTO {
 
     private Long id;
     private String url;
     private List<Long> articlesIds;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public List<Long> getArticlesIds() {
-        return articlesIds;
-    }
-
-    public void setArticlesIds(List<Long> articlesIds) {
-        this.articlesIds = articlesIds;
-    }
 }
