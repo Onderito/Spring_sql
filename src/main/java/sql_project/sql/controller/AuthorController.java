@@ -7,8 +7,9 @@ import sql_project.sql.model.Author;
 import sql_project.sql.repository.AuthorRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-    @RestController
+@RestController
     @RequestMapping("/author")
     public class AuthorController {
         private final AuthorRepository authorRepository;
@@ -76,4 +77,4 @@ import java.util.List;
             return authorDTO;
         }
     }
-}
+

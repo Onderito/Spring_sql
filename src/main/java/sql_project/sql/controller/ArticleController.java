@@ -1,175 +1,65 @@
 package sql_project.sql.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sql_project.sql.model.Article;
-import sql_project.sql.model.Category;
-import sql_project.sql.model.Image;
-import sql_project.sql.repository.ArticleRepository;
-import sql_project.sql.repository.CategoryRepository;
 import sql_project.sql.dto.ArticleDTO;
-import sql_project.sql.repository.ImageRepository;
+import sql_project.sql.services.ArticleService;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/articles")
 public class ArticleController {
 
-    @Autowired
-    private ArticleRepository articleRepository;
+    private final ArticleService articleService;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private final ImageRepository imageRepository;
-
-    public ArticleController(ArticleRepository articleRepository, CategoryRepository categoryRepository, ImageRepository imageRepository) {
-        this.articleRepository = articleRepository;
-        this.categoryRepository = categoryRepository;
-        this.imageRepository = imageRepository;
+    public ArticleController(ArticleService articleService) {
+        this.articleService = articleService;
     }
-
-    // Méthodes CRUD à venir
 
     @GetMapping
     public ResponseEntity<List<ArticleDTO>> getAllArticles() {
-        List<Article> articles = articleRepository.findAll();
-        if (((List<?>) articles).isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        List<ArticleDTO> articleDTOS = articles.stream().map(this::convertToDTO).collect(Collectors.toList());
-        return ResponseEntity.ok(articleDTOS);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id) {
-        Optional<Article> optionalArticle = articleRepository.findById(id);
-        if (!optionalArticle.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        Article article = optionalArticle.get();
-        return ResponseEntity.ok(convertToDTO(article));
-    }
-
-    @PostMapping
-    public ResponseEntity<ArticleDTO> createArticle(@RequestBody ArticleDTO articleDto) {
-        Article article = convertToEntity(articleDto);
-        article.setCreatedAt(LocalDateTime.now());
-        article.setUpdatedAt(LocalDateTime.now());
-
-        // Ajout de la catégorie
-        if (article.getCategory() != null) {
-            Category category = categoryRepository.findById(article.getCategory().getId()).orElse(null);
-            if (category == null) {
-                return ResponseEntity.badRequest().body(null); // Retourne une réponse 400 Bad Request si la catégorie n'est pas trouvée
-            }
-            article.setCategory(category);
-        }
-
-        if (article.getImages() != null && !article.getImages().isEmpty()) {
-            List<Image> validImages = new ArrayList<>();
-            for (Image image : article.getImages()) {
-                if (image.getId() != null) {
-                    // Vérification des images existantes
-                    Image existingImage = imageRepository.findById(image.getId()).orElse(null);
-                    if (existingImage != null) {
-                        validImages.add(existingImage);
-                    } else {
-                        return ResponseEntity.badRequest().body(null);
-                    }
-                } else {
-                    // Création de nouvelles images
-                    Image savedImage = imageRepository.save(image);
-                    validImages.add(savedImage);
-                }
-            }
-            article.setImages(validImages);
-        }
-
-        Article savedArticle = articleRepository.save(article);
-        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedArticle));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody ArticleDTO articleDTO) {
-        Optional<Article> optionalArticle = articleRepository.findById(id);
-        if (!optionalArticle.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        Article article = optionalArticle.get();
-        article.setTitle(articleDTO.getTitle());
-        article.setContent(articleDTO.getContent());
-        article.setUpdatedAt(LocalDateTime.now());
-
-        // Mise à jour de la catégorie
-        if (articleDTO.getCategoryId() != null) {
-            Optional<Category> optionalCategory = categoryRepository.findById(articleDTO.getCategoryId());
-            if (!optionalCategory.isPresent()) {
-                return ResponseEntity.badRequest().build();
-            }
-            Category category = optionalCategory.get();
-            article.setCategory(category);
-        }
-
-        Article updatedArticle = articleRepository.save(article);
-        return ResponseEntity.ok(convertToDTO(updatedArticle));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
-        Article article = articleRepository.findById(id).orElse(null);
-        if (article == null) {
-            return ResponseEntity.notFound().build();
-        }
-        articleRepository.delete(article);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/title/{title}")
-    public ResponseEntity<List<Article>> getArticlesByTitle(@PathVariable String title) {
-        List<Article> articles = articleRepository.findByTitle(title);
+        List<ArticleDTO> articles = articleService.getAllArticles();
         if (articles.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(articles);
     }
 
-private ArticleDTO convertToDTO(Article article) {
-    ArticleDTO articleDto = new ArticleDTO();
-    articleDto.setId(article.getId());
-    articleDto.setTitle(article.getTitle());
-    articleDto.setContent(article.getContent());
-    articleDto.setCreatedAt(article.getCreatedAt());
-    articleDto.setUpdatedAt(article.getUpdatedAt());
-    if (article.getCategory() != null) {
-        articleDto.setCategoryId(article.getCategory().getId());
-    }
-    if (article.getImages() != null) {
-        articleDto.setImageUrls(article.getImages().stream().map(Image::getUrl).collect(Collectors.toList()));
-    }
-    return articleDto;
-}
-    private Article convertToEntity(ArticleDTO articleDTO) {
-        Article article = new Article();
-        article.setId(articleDTO.getId());
-        article.setTitle(articleDTO.getTitle());
-        article.setContent(articleDTO.getContent());
-        article.setCreatedAt(articleDTO.getCreatedAt());
-        article.setUpdatedAt(articleDTO.getUpdatedAt());
-        if (articleDTO.getCategoryId() != null) {
-            Category category = categoryRepository.findById(articleDTO.getCategoryId()).orElse(null);
-            article.setCategory(category);
+    @GetMapping("/{id}")
+    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id) {
+        ArticleDTO article = articleService.getArticleById(id);
+        if (article == null) {
+            return ResponseEntity.notFound().build();
         }
-        return article;
+        return ResponseEntity.ok(article);
+    }
+
+    @PostMapping
+    public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article) {
+        ArticleDTO savedArticle = articleService.createArticle(article);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
+        ArticleDTO updatedArticle = articleService.updateArticle(id, articleDetails);
+        if (updatedArticle == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedArticle);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
+        if (articleService.deleteArticle(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
 

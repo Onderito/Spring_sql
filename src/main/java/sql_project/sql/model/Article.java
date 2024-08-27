@@ -25,16 +25,10 @@ public class Article {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToMany
-    @JoinTable(
-            name = "article_tag",
-            joinColumns = @JoinColumn(name ="article_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    private List<Tag> tags;
 
-    @Setter
-    @Getter
+    @OneToMany(mappedBy = "article")
+    private List<ArticleAuthor> articleAuthors;
+
     @ManyToMany
     @JoinTable(
             name = "article_image",

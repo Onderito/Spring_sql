@@ -18,6 +18,8 @@ public class ArticleDTO {
     @Setter
     @Getter
     private List<String> imageUrls;
+    private String categoryName;
+    private List<AuthorDTO> Authors;
 
 }
 
