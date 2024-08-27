@@ -2,6 +2,7 @@ package sql_project.sql.services;
 
 import org.springframework.stereotype.Service;
 import sql_project.sql.dto.ArticleDTO;
+import sql_project.sql.exception.ResourceNotFoundException;
 import sql_project.sql.mapper.ArticleMapper;
 import sql_project.sql.model.*;
 import sql_project.sql.repository.*;
@@ -42,7 +43,7 @@ public class ArticleService {
     }
 
     public ArticleDTO getArticleById(Long id) {
-        Article article = articleRepository.findById(id).orElse(null);
+        Article article = articleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("L'article avec l'id " + id + " n'a pas été trouvé"));
         if (article == null) {
             return null;
         }
